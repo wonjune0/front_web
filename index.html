@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>상품 목록</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">shopdemo</a>
+      <div class="search-bar">
+        <select>
+          <option>전체</option>
+        </select>
+        <input type="text" placeholder="찾고 싶은 상품을 검색해보세요!" />
+        <button type="button" aria-label="검색">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="header-actions">
+        <a href="#" class="action">
+          <span class="icon">🛒</span>
+          <span>장바구니</span>
+          <span class="cart-count" id="cart-count">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="breadcrumb">쇼핑 홈 &gt; 뷰티</div>
+
+  <div class="page-layout">
+    <aside class="sidebar">
+      <h3>필터</h3>
+      <ul class="filter-list">
+        <li><label><input type="checkbox" /> 무료배송만 보기</label></li>
+      </ul>
+      <h3>카테고리</h3>
+      <ul class="category-list" id="category-list"></ul>
+    </aside>
+
+    <main class="main-content">
+      <h1>뷰티</h1>
+      <div class="toolbar">
+        <div class="sort-tabs" id="sort-tabs">
+          <button type="button" class="active" data-sort="recommended">추천순</button>
+          <button type="button" data-sort="price-asc">낮은가격순</button>
+          <button type="button" data-sort="price-desc">높은가격순</button>
+          <button type="button" data-sort="reviews">판매량순</button>
+        </div>
+        <select class="page-size">
+          <option>60개씩 보기</option>
+        </select>
+      </div>
+      <div class="product-grid" id="product-grid"></div>
+    </main>
+  </div>
+
+  <script type="module" src="js/products.js"></script>
+</body>
+</html>
