@@ -1,6 +1,6 @@
 import { mockProducts } from "../data/products.mock.js";
 import { formatKRW, escapeHtml } from "./util.js";
-import { getCart, getCheckoutSelection, renderCartCountBadge } from "./cart-store.js";
+import { getCart, getCheckoutSelection, renderCartCountBadge, removeMany, setLastOrder } from "./cart-store.js";
 
 const layout = document.getElementById("checkout-layout");
 
@@ -62,9 +62,15 @@ function renderSummary(entries) {
       <p class="field-error" id="error-consent" hidden></p>
 
       <button type="button" class="btn-submit" id="pay-btn">결제하기</button>
-      <div id="checkout-toast" class="cart-toast" hidden></div>
     </aside>
   `;
+}
+
+function generateOrderNumber() {
+  const now = new Date();
+  const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const randomPart = Math.floor(100000 + Math.random() * 900000);
+  return `${datePart}-${randomPart}`;
 }
 
 function render() {
@@ -196,9 +202,25 @@ layout.addEventListener("click", (e) => {
     const consentOk = validateConsent();
     if (!addressOk || !consentOk) return;
 
-    const toast = document.getElementById("checkout-toast");
-    toast.textContent = "실제 결제는 PG사(결제대행사) 연동 후 진행됩니다";
-    toast.hidden = false;
+    const entries = getOrderEntries();
+    const totalPrice = entries.reduce((sum, entry) => sum + entry.product.price * entry.quantity, 0);
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+    const paymentMethodLabel =
+      paymentMethod === "card" ? "신용/체크카드 (신한카드 1234-****-****-5678)" : "무통장입금";
+    const address1 = document.getElementById("address1").value.trim();
+    const address2 = document.getElementById("address2").value.trim();
+
+    setLastOrder({
+      orderNumber: generateOrderNumber(),
+      placedAt: new Date().toISOString(),
+      items: entries.map((entry) => ({ productId: entry.productId, quantity: entry.quantity })),
+      totalPrice,
+      recipientName: document.getElementById("recipient-name").value.trim(),
+      address: `${address1} ${address2}`,
+      paymentMethodLabel,
+    });
+    removeMany(entries.map((entry) => entry.productId));
+    window.location.href = "order-complete.html";
   }
 });
 

@@ -75,3 +75,17 @@ export function getCheckoutSelection() {
     return null;
   }
 }
+
+const LAST_ORDER_KEY = "shopdemo_last_order";
+
+export function setLastOrder(order) {
+  sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
+}
+
+export function getLastOrder() {
+  try {
+    return JSON.parse(sessionStorage.getItem(LAST_ORDER_KEY));
+  } catch {
+    return null;
+  }
+}

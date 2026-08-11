@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>주문완료</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">shopdemo</a>
+      <div class="search-bar">
+        <select>
+          <option>전체</option>
+        </select>
+        <input type="text" placeholder="찾고 싶은 상품을 검색해보세요!" />
+        <button type="button" aria-label="검색">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="header-actions">
+        <a href="cart.html" class="action">
+          <span class="icon">🛒</span>
+          <span>장바구니</span>
+          <span class="cart-count" id="cart-count">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="cart-title-row">
+    <h1>주문완료</h1>
+    <div class="cart-stepper">
+      <span class="step">01 옵션선택</span>
+      <span class="sep">&gt;</span>
+      <span class="step">02 장바구니</span>
+      <span class="sep">&gt;</span>
+      <span class="step">03 주문/결제</span>
+      <span class="sep">&gt;</span>
+      <span class="step active">04 주문완료</span>
+    </div>
+  </div>
+
+  <div class="order-complete-layout" id="order-complete-layout"></div>
+
+  <script type="module" src="js/order-complete.js"></script>
+</body>
+</html>
