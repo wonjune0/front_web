@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header auth-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">shopdemo</a>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <div class="input-with-icon">
+            <span class="input-icon">✉</span>
+            <input type="text" id="field-login-email" aria-label="아이디(이메일)" placeholder="아이디(이메일)" autocomplete="username" />
+            <button type="button" class="input-action-btn" id="clear-email-btn" aria-label="입력 지우기">✕</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="input-with-icon">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="field-login-password" aria-label="비밀번호" placeholder="비밀번호" autocomplete="current-password" />
+            <button type="button" class="input-action-btn" id="toggle-password-btn" aria-label="비밀번호 표시">👁</button>
+          </div>
+          <p class="field-error" id="error-login" hidden></p>
+        </div>
+
+        <div class="login-options-row">
+          <label class="remember-me">
+            <input type="checkbox" id="remember-me" />
+            <span>자동 로그인</span>
+          </label>
+          <a href="#" class="find-account-link">아이디·비밀번호 찾기</a>
+        </div>
+
+        <button type="submit" class="btn-submit" id="login-submit-btn">로그인</button>
+        <a href="signup.html" class="btn-outline">회원가입</a>
+
+        <div id="login-toast" class="cart-toast" hidden></div>
+      </form>
+
+      <p class="auth-copyright">© shopdemo. All rights reserved.</p>
+    </div>
+  </main>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>
