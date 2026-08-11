@@ -1,5 +1,5 @@
-// 임시 더미 데이터. back_web 백엔드 연동 시 이 파일과 js/products.js의
-// loadProducts() 더미 분기를 삭제하고 fetch('/api/products')로 교체할 것.
+// 임시 더미 데이터. back_web 백엔드 연동 시 이 파일과 js/products.js, js/product.js의
+// 더미 분기를 삭제하고 fetch('/api/products')로 교체할 것.
 
 export const categoryTree = [
   { name: "뷰티", subcategories: ["스킨케어", "클렌징", "선케어", "메이크업"] },
@@ -23,6 +23,7 @@ export const mockProducts = [
     rating: 4.6,
     reviewCount: 3201,
     rewardAmount: 300,
+    detailDescription: "건조하고 예민한 피부에 수분과 진정 케어를 동시에 더해주는 크림입니다. 산뜻한 제형으로 끈적임 없이 흡수되며, 아침·저녁 데일리 케어로 사용하기 좋습니다.",
   },
   {
     id: 2,
@@ -37,6 +38,7 @@ export const mockProducts = [
     rating: 4.8,
     reviewCount: 15234,
     rewardAmount: 80,
+    detailDescription: "100% 순면 소재로 자극이 적고 보풀이 적게 발생하는 화장솜입니다. 토너 정리, 포인트 메이크업 제거 등 다양한 용도로 활용할 수 있습니다.",
   },
   {
     id: 3,
@@ -51,6 +53,7 @@ export const mockProducts = [
     rating: 4.4,
     reviewCount: 982,
     rewardAmount: 200,
+    detailDescription: "약산성 포뮬러로 피부 자극을 최소화한 진정 토너입니다. 세안 후 결을 정돈하고 다음 단계 흡수를 도와줍니다.",
   },
   {
     id: 4,
@@ -65,6 +68,7 @@ export const mockProducts = [
     rating: 4.7,
     reviewCount: 5643,
     rewardAmount: 150,
+    detailDescription: "매트한 벨벳 텍스처로 밀착력이 뛰어난 립 틴트입니다. 얇게 발라도 선명한 발색을 오래 유지합니다.",
   },
   {
     id: 5,
@@ -79,6 +83,7 @@ export const mockProducts = [
     rating: 4.5,
     reviewCount: 2210,
     rewardAmount: 340,
+    detailDescription: "SPF50+/PA++++ 자외선 차단 지수로 강한 자외선을 효과적으로 막아주면서도 백탁 없이 산뜻하게 마무리됩니다.",
   },
   {
     id: 6,
@@ -93,6 +98,7 @@ export const mockProducts = [
     rating: 4.3,
     reviewCount: 764,
     rewardAmount: 0,
+    detailDescription: "풍성한 거품이 모공 속 노폐물과 메이크업 잔여물을 부드럽게 씻어내면서도 피부 당김 없이 촉촉함을 유지시켜 줍니다.",
   },
   {
     id: 7,
@@ -107,6 +113,7 @@ export const mockProducts = [
     rating: 4.9,
     reviewCount: 8821,
     rewardAmount: 360,
+    detailDescription: "유기농 인증 원두를 은은한 산미와 고소한 풍미로 로스팅했습니다. 핸드드립, 에스프레소 모두 잘 어울립니다.",
   },
   {
     id: 8,
@@ -121,6 +128,7 @@ export const mockProducts = [
     rating: 4.6,
     reviewCount: 4102,
     rewardAmount: 160,
+    detailDescription: "무항생제 인증 농장에서 매일 수거한 신선한 계란입니다. 산란일자를 표기하여 신선도를 확인할 수 있습니다.",
   },
   {
     id: 9,
@@ -135,6 +143,7 @@ export const mockProducts = [
     rating: 4.4,
     reviewCount: 512,
     rewardAmount: 500,
+    detailDescription: "아몬드, 캐슈넛, 호두 등 인기 견과류를 소포장으로 담은 선물세트입니다. 명절 선물이나 답례품으로 좋습니다.",
   },
   {
     id: 10,
@@ -149,6 +158,7 @@ export const mockProducts = [
     rating: 4.5,
     reviewCount: 1893,
     rewardAmount: 700,
+    detailDescription: "부드러운 극세사 원단으로 사계절 사용하기 좋은 이불세트입니다. 이불커버, 베개커버가 함께 구성되어 있습니다.",
   },
   {
     id: 11,
@@ -163,6 +173,7 @@ export const mockProducts = [
     rating: 4.2,
     reviewCount: 233,
     rewardAmount: 0,
+    detailDescription: "주요 무선 청소기 모델과 호환되는 교체용 필터 2개 구성입니다. 정기 교체로 흡입력을 유지할 수 있습니다.",
   },
   {
     id: 12,
@@ -177,6 +188,7 @@ export const mockProducts = [
     rating: 4.6,
     reviewCount: 3390,
     rewardAmount: 220,
+    detailDescription: "은은하게 오래 지속되는 섬유 방향제 리필 3개 구성입니다. 침구, 커튼, 옷장 등에 사용하기 좋습니다.",
   },
   {
     id: 13,
@@ -191,6 +203,7 @@ export const mockProducts = [
     rating: 4.5,
     reviewCount: 1200,
     rewardAmount: 400,
+    detailDescription: "3L 대용량 물통으로 최대 12시간 연속 가동이 가능한 미니 가습기입니다. 사무실, 침실 등 소형 공간에 적합합니다.",
   },
   {
     id: 14,
@@ -205,6 +218,7 @@ export const mockProducts = [
     rating: 4.6,
     reviewCount: 3400,
     rewardAmount: 220,
+    detailDescription: "클릭 소음을 줄인 무소음 스위치와 2.4GHz 무선 연결을 지원하는 마우스입니다. 사무실, 도서관 등에서 사용하기 좋습니다.",
   },
   {
     id: 15,
@@ -219,6 +233,7 @@ export const mockProducts = [
     rating: 4.7,
     reviewCount: 2100,
     rewardAmount: 600,
+    detailDescription: "쿠셔닝 미드솔이 착지 충격을 흡수해 장거리 러닝에도 편안한 운동화입니다. 통기성 좋은 메쉬 소재를 사용했습니다.",
   },
   {
     id: 16,
@@ -233,5 +248,6 @@ export const mockProducts = [
     rating: 4.4,
     reviewCount: 430,
     rewardAmount: 900,
+    detailDescription: "펼치기만 하면 바로 설치되는 원터치 방식의 2~3인용 텐트입니다. 초경량 설계로 휴대와 보관이 간편합니다.",
   },
 ];
