@@ -60,3 +60,18 @@ export function renderCartCountBadge() {
   const el = document.getElementById("cart-count");
   if (el) el.textContent = String(getCartCount());
 }
+
+const CHECKOUT_SELECTION_KEY = "shopdemo_checkout_selection";
+
+export function setCheckoutSelection(productIds) {
+  sessionStorage.setItem(CHECKOUT_SELECTION_KEY, JSON.stringify(productIds));
+}
+
+export function getCheckoutSelection() {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(CHECKOUT_SELECTION_KEY));
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
