@@ -6,6 +6,7 @@ import {
   removeFromCart,
   removeMany,
   renderCartCountBadge,
+  setCheckoutSelection,
 } from "./cart-store.js";
 
 const layout = document.getElementById("cart-layout");
@@ -82,7 +83,6 @@ function renderSummary(selectedEntries) {
       <div class="summary-row"><span>총 배송비</span><span>+0원</span></div>
       <div class="summary-total"><span>${formatKRW(totalPrice)}</span></div>
       <button type="button" class="btn-submit" id="checkout-btn" ${selectedEntries.length === 0 ? "disabled" : ""}>총 ${selectedEntries.length}개 상품 구매하기</button>
-      <div id="cart-toast" class="cart-toast" hidden></div>
     </aside>
   `;
 }
@@ -173,9 +173,8 @@ layout.addEventListener("click", (e) => {
   }
 
   if (e.target.closest("#checkout-btn")) {
-    const toast = document.getElementById("cart-toast");
-    toast.textContent = "주문/결제 기능은 back_web 연동 후 실제로 동작합니다";
-    toast.hidden = false;
+    setCheckoutSelection([...selectedIds]);
+    window.location.href = "checkout.html";
   }
 });
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>상품 목록</title>
+  <title>주문/결제</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
@@ -32,35 +32,23 @@
     </div>
   </header>
 
-  <div class="breadcrumb">쇼핑 홈 &gt; 뷰티</div>
-
-  <div class="page-layout">
-    <aside class="sidebar">
-      <h3>필터</h3>
-      <ul class="filter-list">
-        <li><label><input type="checkbox" /> 무료배송만 보기</label></li>
-      </ul>
-      <h3>카테고리</h3>
-      <ul class="category-list" id="category-list"></ul>
-    </aside>
-
-    <main class="main-content">
-      <h1>뷰티</h1>
-      <div class="toolbar">
-        <div class="sort-tabs" id="sort-tabs">
-          <button type="button" class="active" data-sort="recommended">추천순</button>
-          <button type="button" data-sort="price-asc">낮은가격순</button>
-          <button type="button" data-sort="price-desc">높은가격순</button>
-          <button type="button" data-sort="reviews">판매량순</button>
-        </div>
-        <select class="page-size">
-          <option>60개씩 보기</option>
-        </select>
-      </div>
-      <div class="product-grid" id="product-grid"></div>
-    </main>
+  <div class="cart-title-row">
+    <a href="cart.html" class="cart-back" aria-label="이전으로">&lt;</a>
+    <h1>주문/결제</h1>
+    <div class="cart-stepper">
+      <span class="step">01 옵션선택</span>
+      <span class="sep">&gt;</span>
+      <span class="step">02 장바구니</span>
+      <span class="sep">&gt;</span>
+      <span class="step active">03 주문/결제</span>
+      <span class="sep">&gt;</span>
+      <span class="step">04 주문완료</span>
+    </div>
   </div>
 
-  <script type="module" src="js/products.js"></script>
+  <div class="cart-layout" id="checkout-layout"></div>
+
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script type="module" src="js/checkout.js"></script>
 </body>
 </html>
