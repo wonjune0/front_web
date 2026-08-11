@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원가입</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header auth-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">shopdemo</a>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1 class="auth-title">회원가입</h1>
+
+      <form id="signup-form" novalidate>
+        <div class="form-group">
+          <label for="field-email">아이디(이메일)</label>
+          <input type="text" id="field-email" placeholder="아이디(이메일)" autocomplete="username" />
+          <p class="field-error" id="error-email" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="field-password">비밀번호</label>
+          <input type="password" id="field-password" placeholder="비밀번호 (8자 이상)" autocomplete="new-password" />
+          <p class="field-error" id="error-password" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="field-password-confirm">비밀번호 확인</label>
+          <input type="password" id="field-password-confirm" placeholder="비밀번호 확인" autocomplete="new-password" />
+          <p class="field-error" id="error-password-confirm" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="field-name">이름</label>
+          <input type="text" id="field-name" placeholder="이름" autocomplete="name" />
+          <p class="field-error" id="error-name" hidden></p>
+        </div>
+
+        <div class="form-group">
+          <label for="field-phone">휴대폰번호</label>
+          <input type="text" id="field-phone" placeholder="휴대폰번호 ('-' 없이 숫자만 입력)" autocomplete="tel" />
+          <p class="field-error" id="error-phone" hidden></p>
+        </div>
+
+        <div class="agreement-section">
+          <label class="agreement-master">
+            <input type="checkbox" id="agree-all" />
+            <span>모두 확인하였으며 동의합니다</span>
+          </label>
+          <ul class="agreement-list">
+            <li class="agreement-item">
+              <label>
+                <input type="checkbox" class="agree-required" id="agree-age" />
+                <span>[필수] 만 14세 이상입니다</span>
+              </label>
+            </li>
+            <li class="agreement-item">
+              <label>
+                <input type="checkbox" class="agree-required" id="agree-terms" />
+                <span>[필수] shopdemo 이용약관 동의</span>
+              </label>
+              <span class="agreement-arrow" aria-hidden="true">&gt;</span>
+            </li>
+            <li class="agreement-item">
+              <label>
+                <input type="checkbox" class="agree-required" id="agree-finance" />
+                <span>[필수] 전자금융거래 이용약관 동의</span>
+              </label>
+              <span class="agreement-arrow" aria-hidden="true">&gt;</span>
+            </li>
+            <li class="agreement-item">
+              <label>
+                <input type="checkbox" class="agree-required" id="agree-thirdparty" />
+                <span>[필수] 개인정보 제3자 제공 동의</span>
+              </label>
+              <span class="agreement-arrow" aria-hidden="true">&gt;</span>
+            </li>
+          </ul>
+          <p class="field-error" id="error-agreement" hidden>필수 약관에 모두 동의해주세요.</p>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submit-btn">동의하고 가입하기</button>
+        <div id="form-toast" class="cart-toast" hidden></div>
+      </form>
+
+      <p class="auth-footer-link">이미 계정이 있으신가요? <a href="login.html">로그인</a></p>
+    </div>
+  </main>
+
+  <script type="module" src="js/signup.js"></script>
+</body>
+</html>
