@@ -1,5 +1,5 @@
 import { mockProducts } from "../data/products.mock.js";
-import { formatKRW, escapeHtml } from "./util.js";
+import { formatKRW, escapeHtml, initHeaderSearch } from "./util.js";
 import { getCart, getCheckoutSelection, renderCartCountBadge, removeMany, setLastOrder } from "./cart-store.js";
 
 const layout = document.getElementById("checkout-layout");
@@ -225,3 +225,4 @@ layout.addEventListener("click", (e) => {
 });
 
 render();
+initHeaderSearch();

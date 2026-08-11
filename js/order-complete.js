@@ -1,5 +1,5 @@
 import { mockProducts } from "../data/products.mock.js";
-import { formatKRW, escapeHtml } from "./util.js";
+import { formatKRW, escapeHtml, initHeaderSearch } from "./util.js";
 import { getLastOrder, renderCartCountBadge } from "./cart-store.js";
 
 const layout = document.getElementById("order-complete-layout");
@@ -68,3 +68,4 @@ function render() {
 }
 
 render();
+initHeaderSearch();

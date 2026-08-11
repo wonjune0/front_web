@@ -1,5 +1,5 @@
 import { mockProducts } from "../data/products.mock.js";
-import { formatKRW, escapeHtml, getQueryParam } from "./util.js";
+import { formatKRW, escapeHtml, getQueryParam, initHeaderSearch } from "./util.js";
 import { addToCart, renderCartCountBadge } from "./cart-store.js";
 
 const breadcrumb = document.getElementById("breadcrumb");
@@ -286,3 +286,4 @@ if (!product) {
 }
 
 renderCartCountBadge();
+initHeaderSearch();

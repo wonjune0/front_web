@@ -242,6 +242,12 @@ header.site-header {
   background: #f5f5f7;
 }
 
+.subcategory-item.active {
+  color: var(--color-primary);
+  font-weight: 700;
+  background: var(--color-badge-bg);
+}
+
 /* Main content */
 .main-content h1 {
   font-size: 24px;
@@ -291,6 +297,13 @@ header.site-header {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 28px 16px;
+}
+
+.empty-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 80px 20px;
 }
 
 .product-card {

@@ -14,8 +14,8 @@
         <select>
           <option>전체</option>
         </select>
-        <input type="text" placeholder="찾고 싶은 상품을 검색해보세요!" />
-        <button type="button" aria-label="검색">
+        <input type="text" id="search-input" placeholder="찾고 싶은 상품을 검색해보세요!" />
+        <button type="button" id="search-btn" aria-label="검색">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="7"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -32,7 +32,7 @@
     </div>
   </header>
 
-  <div class="breadcrumb">쇼핑 홈 &gt; 뷰티</div>
+  <div class="breadcrumb" id="breadcrumb">쇼핑 홈 &gt; 전체 상품</div>
 
   <div class="page-layout">
     <aside class="sidebar">
@@ -45,7 +45,7 @@
     </aside>
 
     <main class="main-content">
-      <h1>뷰티</h1>
+      <h1 id="page-heading">전체 상품</h1>
       <div class="toolbar">
         <div class="sort-tabs" id="sort-tabs">
           <button type="button" class="active" data-sort="recommended">추천순</button>
