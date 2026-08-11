@@ -1,5 +1,6 @@
 import { mockProducts } from "../data/products.mock.js";
 import { formatKRW, escapeHtml, getQueryParam } from "./util.js";
+import { addToCart, renderCartCountBadge } from "./cart-store.js";
 
 const breadcrumb = document.getElementById("breadcrumb");
 const layout = document.getElementById("detail-layout");
@@ -263,6 +264,8 @@ function render(product) {
   });
 
   document.getElementById("add-cart-btn").addEventListener("click", () => {
+    addToCart(product.id, quantity);
+    renderCartCountBadge();
     showToast("장바구니에 담았습니다");
   });
 
@@ -281,3 +284,5 @@ if (!product) {
 } else {
   render(product);
 }
+
+renderCartCountBadge();

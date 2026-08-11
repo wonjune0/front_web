@@ -1,5 +1,6 @@
 import { mockProducts, categoryTree } from "../data/products.mock.js";
 import { formatKRW, escapeHtml } from "./util.js";
+import { renderCartCountBadge } from "./cart-store.js";
 
 const grid = document.getElementById("product-grid");
 const categoryList = document.getElementById("category-list");
@@ -98,3 +99,4 @@ sortTabs.addEventListener("click", (e) => {
 
 renderCategories();
 renderGrid();
+renderCartCountBadge();
