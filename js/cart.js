@@ -1,5 +1,5 @@
 import { mockProducts } from "../data/products.mock.js";
-import { formatKRW, escapeHtml } from "./util.js";
+import { formatKRW, escapeHtml, initHeaderSearch } from "./util.js";
 import {
   getCart,
   updateQuantity,
@@ -201,3 +201,4 @@ layout.addEventListener("change", (e) => {
 });
 
 render();
+initHeaderSearch();

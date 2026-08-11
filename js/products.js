@@ -1,43 +1,117 @@
 import { mockProducts, categoryTree } from "../data/products.mock.js";
-import { formatKRW, escapeHtml } from "./util.js";
+import { formatKRW, escapeHtml, getQueryParam, initHeaderSearch } from "./util.js";
 import { renderCartCountBadge } from "./cart-store.js";
 
 const grid = document.getElementById("product-grid");
 const categoryList = document.getElementById("category-list");
 const sortTabs = document.getElementById("sort-tabs");
+const breadcrumbEl = document.getElementById("breadcrumb");
+const headingEl = document.getElementById("page-heading");
+const searchInput = document.getElementById("search-input");
 
 let currentSort = "recommended";
 let expandedCategory = categoryTree[0].name;
+let activeCategory = null; // { parent, sub: string|null } | null (null = 전체)
+let searchTerm = "";
+
+function getFilteredProducts() {
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    return mockProducts.filter((p) => p.name.toLowerCase().includes(term));
+  }
+  if (activeCategory?.sub) {
+    return mockProducts.filter((p) => p.category === activeCategory.sub);
+  }
+  if (activeCategory?.parent) {
+    return mockProducts.filter((p) => p.parentCategory === activeCategory.parent);
+  }
+  return mockProducts;
+}
 
 function renderCategories() {
-  categoryList.innerHTML = categoryTree
-    .map((cat) => {
-      const isExpanded = cat.name === expandedCategory;
-      const subItems = isExpanded
-        ? `<ul class="subcategory-list">
-            ${cat.subcategories
-              .map((sub) => `<li class="subcategory-item">${escapeHtml(sub)}</li>`)
-              .join("")}
-          </ul>`
-        : "";
-      return `
-        <li class="category-group">
-          <div class="category-row ${isExpanded ? "active" : ""}" data-category="${escapeHtml(cat.name)}">
-            <span>${escapeHtml(cat.name)}</span>
-            <span class="chevron ${isExpanded ? "open" : ""}">&gt;</span>
-          </div>
-          ${subItems}
-        </li>`;
-    })
-    .join("");
+  categoryList.innerHTML = `
+    <li class="category-group">
+      <div class="category-row ${!activeCategory ? "active" : ""}" data-category="__all__">
+        <span>전체</span>
+      </div>
+    </li>
+    ${categoryTree
+      .map((cat) => {
+        const isExpanded = cat.name === expandedCategory;
+        const isCategoryActive = activeCategory?.parent === cat.name && !activeCategory?.sub;
+        const subItems = isExpanded
+          ? `<ul class="subcategory-list">
+              ${cat.subcategories
+                .map((sub) => {
+                  const isSubActive = activeCategory?.parent === cat.name && activeCategory?.sub === sub;
+                  return `<li class="subcategory-item ${isSubActive ? "active" : ""}" data-parent="${escapeHtml(cat.name)}" data-sub="${escapeHtml(sub)}">${escapeHtml(sub)}</li>`;
+                })
+                .join("")}
+            </ul>`
+          : "";
+        return `
+          <li class="category-group">
+            <div class="category-row ${isCategoryActive ? "active" : ""}" data-category="${escapeHtml(cat.name)}">
+              <span>${escapeHtml(cat.name)}</span>
+              <span class="chevron ${isExpanded ? "open" : ""}">&gt;</span>
+            </div>
+            ${subItems}
+          </li>`;
+      })
+      .join("")}
+  `;
+}
+
+function renderPageHeading() {
+  let title;
+  let crumbHtml;
+
+  if (searchTerm) {
+    title = `'${searchTerm}' 검색결과`;
+    crumbHtml = escapeHtml(title);
+  } else if (activeCategory?.sub) {
+    title = activeCategory.sub;
+    crumbHtml = `${escapeHtml(activeCategory.parent)} &gt; ${escapeHtml(activeCategory.sub)}`;
+  } else if (activeCategory?.parent) {
+    title = activeCategory.parent;
+    crumbHtml = escapeHtml(activeCategory.parent);
+  } else {
+    title = "전체 상품";
+    crumbHtml = "전체 상품";
+  }
+
+  headingEl.textContent = title;
+  breadcrumbEl.innerHTML = `쇼핑 홈 &gt; ${crumbHtml}`;
+}
+
+function applyFilterChange() {
+  searchTerm = "";
+  if (searchInput) searchInput.value = "";
+  renderCategories();
+  renderPageHeading();
+  renderGrid();
 }
 
 categoryList.addEventListener("click", (e) => {
+  const subItem = e.target.closest(".subcategory-item");
+  if (subItem) {
+    activeCategory = { parent: subItem.dataset.parent, sub: subItem.dataset.sub };
+    applyFilterChange();
+    return;
+  }
+
   const row = e.target.closest(".category-row");
   if (!row) return;
   const name = row.dataset.category;
-  expandedCategory = expandedCategory === name ? null : name;
-  renderCategories();
+
+  if (name === "__all__") {
+    activeCategory = null;
+    expandedCategory = null;
+  } else {
+    expandedCategory = name;
+    activeCategory = { parent: name, sub: null };
+  }
+  applyFilterChange();
 });
 
 function sortProducts(products, sort) {
@@ -85,8 +159,11 @@ function renderProductCard(p) {
 }
 
 function renderGrid() {
-  const sorted = sortProducts(mockProducts, currentSort);
-  grid.innerHTML = sorted.map(renderProductCard).join("");
+  const filtered = getFilteredProducts();
+  const sorted = sortProducts(filtered, currentSort);
+  grid.innerHTML = sorted.length
+    ? sorted.map(renderProductCard).join("")
+    : `<p class="empty-results">조건에 맞는 상품이 없습니다.</p>`;
 }
 
 sortTabs.addEventListener("click", (e) => {
@@ -97,6 +174,22 @@ sortTabs.addEventListener("click", (e) => {
   renderGrid();
 });
 
+const initialSearch = getQueryParam("search");
+if (initialSearch) {
+  searchTerm = initialSearch;
+  if (searchInput) searchInput.value = initialSearch;
+  expandedCategory = null;
+}
+
 renderCategories();
+renderPageHeading();
 renderGrid();
 renderCartCountBadge();
+initHeaderSearch((term) => {
+  searchTerm = term;
+  activeCategory = null;
+  expandedCategory = null;
+  renderCategories();
+  renderPageHeading();
+  renderGrid();
+});
