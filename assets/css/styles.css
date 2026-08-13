@@ -121,6 +121,18 @@ header.site-header {
   line-height: 1;
 }
 
+.account-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.account-links a:hover {
+  color: var(--color-primary);
+}
+
 .cart-count {
   position: absolute;
   top: -4px;
