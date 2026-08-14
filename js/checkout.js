@@ -1,50 +1,59 @@
-import { mockProducts } from "../data/products.mock.js";
+import { api } from "./api.js";
 import { formatKRW, escapeHtml, initHeaderSearch } from "./util.js";
-import { getCart, getCheckoutSelection, renderCartCountBadge, removeMany, setLastOrder } from "./cart-store.js";
+import {
+  getCheckoutSelection,
+  clearCheckoutSelection,
+  setCartCountBadge,
+  setLastOrderNumber,
+} from "./cart-store.js";
+import { requireLogin, renderHeaderAuth } from "./session.js";
 
 const layout = document.getElementById("checkout-layout");
 
 const PHONE_REGEX = /^01[0-9]-?\d{3,4}-?\d{4}$/;
 
-function getOrderEntries() {
-  const cart = getCart();
-  const selection = getCheckoutSelection();
-  const ids = selection && selection.length > 0 ? new Set(selection) : new Set(cart.map((item) => item.productId));
+/**
+ * Rows the buyer ticked on the cart page. The same ids go to POST /api/orders so the
+ * server orders exactly what this page priced -- and it rejects the request outright if
+ * any of them are no longer in the cart.
+ */
+let entries = [];
+let selectedProductIds = null;
 
-  return cart
-    .filter((item) => ids.has(item.productId))
-    .map((item) => {
-      const product = mockProducts.find((p) => p.id === item.productId);
-      return product ? { productId: item.productId, quantity: item.quantity, product } : null;
-    })
-    .filter(Boolean);
+function loadEntries(cartItems) {
+  const selection = getCheckoutSelection();
+  const ids = selection && selection.length > 0 ? new Set(selection) : null;
+  const chosen = ids ? cartItems.filter((item) => ids.has(item.productId)) : cartItems;
+  // Send exactly what this page priced. A selection can go stale -- another tab may have
+  // emptied the cart since -- and an id the cart no longer holds is rejected outright.
+  selectedProductIds = ids ? chosen.map((item) => item.productId) : null;
+  return chosen;
 }
 
-function renderOrderItem(entry) {
-  const { product, quantity } = entry;
+function renderOrderItem(item) {
   return `
     <li class="checkout-item">
       <div class="checkout-item-thumb">
-        <img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(product.name)}" onerror="this.style.visibility='hidden'" />
+        <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" onerror="this.style.visibility='hidden'" />
       </div>
       <div class="checkout-item-info">
-        <div class="checkout-item-name">${escapeHtml(product.name)}</div>
+        <div class="checkout-item-name">${escapeHtml(item.name)}</div>
         <div class="cart-item-delivery">
-          <span class="badge delivery">${escapeHtml(product.deliveryBadge)}</span>
-          <span class="delivery-text">${escapeHtml(product.deliveryText)}</span>
+          <span class="badge delivery">${escapeHtml(item.deliveryBadge)}</span>
+          <span class="delivery-text">${escapeHtml(item.deliveryText)}</span>
         </div>
       </div>
-      <div class="checkout-item-qty">${quantity}개</div>
-      <div class="checkout-item-price">${formatKRW(product.price * quantity)}</div>
+      <div class="checkout-item-qty">${item.quantity}개</div>
+      <div class="checkout-item-price">${formatKRW(item.lineTotal)}</div>
     </li>
   `;
 }
 
-function renderSummary(entries) {
-  const totalPrice = entries.reduce((sum, e) => sum + e.product.price * e.quantity, 0);
-  const totalDiscount = entries.reduce((sum, e) => {
-    if (!e.product.originalPrice) return sum;
-    return sum + (e.product.originalPrice - e.product.price) * e.quantity;
+function renderSummary(orderItems) {
+  const totalPrice = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  const totalDiscount = orderItems.reduce((sum, item) => {
+    if (!item.originalPrice) return sum;
+    return sum + (item.originalPrice - item.price) * item.quantity;
   }, 0);
 
   return `
@@ -66,16 +75,7 @@ function renderSummary(entries) {
   `;
 }
 
-function generateOrderNumber() {
-  const now = new Date();
-  const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  const randomPart = Math.floor(100000 + Math.random() * 900000);
-  return `${datePart}-${randomPart}`;
-}
-
 function render() {
-  const entries = getOrderEntries();
-
   if (entries.length === 0) {
     layout.innerHTML = `
       <div class="cart-empty">
@@ -83,7 +83,6 @@ function render() {
         <a href="cart.html" class="btn-outline">장바구니로 이동</a>
       </div>
     `;
-    renderCartCountBadge();
     return;
   }
 
@@ -142,8 +141,6 @@ function render() {
 
     ${renderSummary(entries)}
   `;
-
-  renderCartCountBadge();
 }
 
 function setError(el, message) {
@@ -198,31 +195,62 @@ layout.addEventListener("click", (e) => {
   }
 
   if (e.target.closest("#pay-btn")) {
-    const addressOk = validateAddress();
-    const consentOk = validateConsent();
-    if (!addressOk || !consentOk) return;
-
-    const entries = getOrderEntries();
-    const totalPrice = entries.reduce((sum, entry) => sum + entry.product.price * entry.quantity, 0);
-    const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
-    const paymentMethodLabel =
-      paymentMethod === "card" ? "신용/체크카드 (신한카드 1234-****-****-5678)" : "무통장입금";
-    const address1 = document.getElementById("address1").value.trim();
-    const address2 = document.getElementById("address2").value.trim();
-
-    setLastOrder({
-      orderNumber: generateOrderNumber(),
-      placedAt: new Date().toISOString(),
-      items: entries.map((entry) => ({ productId: entry.productId, quantity: entry.quantity })),
-      totalPrice,
-      recipientName: document.getElementById("recipient-name").value.trim(),
-      address: `${address1} ${address2}`,
-      paymentMethodLabel,
-    });
-    removeMany(entries.map((entry) => entry.productId));
-    window.location.href = "order-complete.html";
+    placeOrder(e.target.closest("#pay-btn"));
   }
 });
 
-render();
+/**
+ * The server generates the order number, prices the items from its own product rows and
+ * clears the ordered lines from the cart, so nothing here is computed for the record --
+ * only the order number is carried forward, and the completion page re-fetches the rest.
+ */
+async function placeOrder(button) {
+  const addressOk = validateAddress();
+  const consentOk = validateConsent();
+  if (!addressOk || !consentOk) return;
+
+  button.disabled = true;
+  try {
+    const order = await api.orders.create({
+      productIds: selectedProductIds ?? undefined,
+      recipientName: document.getElementById("recipient-name").value.trim(),
+      recipientPhone: document.getElementById("recipient-phone").value.trim(),
+      zipcode: document.getElementById("zipcode").value.trim(),
+      address1: document.getElementById("address1").value.trim(),
+      address2: document.getElementById("address2").value.trim(),
+      deliveryRequest: document.getElementById("delivery-request").value,
+      paymentMethod: document.querySelector('input[name="payment-method"]:checked').value,
+    });
+
+    setLastOrderNumber(order.orderNumber);
+    clearCheckoutSelection();
+    window.location.href = "order-complete.html";
+  } catch (error) {
+    if (error.status !== 401) {
+      setError(document.getElementById("error-consent"), error.message);
+    }
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function load() {
+  layout.innerHTML = `<div class="cart-empty"><p>불러오는 중...</p></div>`;
+  try {
+    const cart = await api.cart.get();
+    setCartCountBadge(cart.items.length);
+    entries = loadEntries(cart.items);
+    render();
+  } catch (error) {
+    if (error.status !== 401) {
+      layout.innerHTML = `<div class="cart-empty"><p>${escapeHtml(error.message)}</p>
+        <a href="cart.html" class="btn-outline">장바구니로 이동</a></div>`;
+    }
+  }
+}
+
+renderHeaderAuth();
+if (requireLogin()) {
+  load();
+}
 initHeaderSearch();

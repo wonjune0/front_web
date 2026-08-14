@@ -1,66 +1,56 @@
-import { mockProducts } from "../data/products.mock.js";
+import { api } from "./api.js";
 import { formatKRW, escapeHtml, initHeaderSearch } from "./util.js";
-import {
-  getCart,
-  updateQuantity,
-  removeFromCart,
-  removeMany,
-  renderCartCountBadge,
-  setCheckoutSelection,
-} from "./cart-store.js";
+import { setCartCountBadge, setCheckoutSelection } from "./cart-store.js";
+import { requireLogin, renderHeaderAuth } from "./session.js";
 
 const layout = document.getElementById("cart-layout");
 const titleEl = document.getElementById("cart-title");
 
+/**
+ * The server cart is the only source of truth: every mutation sends a request and redraws
+ * from the response, so the page can never disagree with what checkout will order. Ticked
+ * rows are the one piece of state kept locally, since selection is not persisted server-side.
+ */
+let items = [];
 let selectedIds = new Set();
 let initialized = false;
 
-function getCartWithProducts() {
-  return getCart()
-    .map((item) => {
-      const product = mockProducts.find((p) => p.id === item.productId);
-      return product ? { productId: item.productId, quantity: item.quantity, product } : null;
-    })
-    .filter(Boolean);
-}
-
-function renderCartRow(entry) {
-  const { product, quantity, productId } = entry;
-  const discountPercent = product.originalPrice
-    ? Math.round((1 - product.price / product.originalPrice) * 100)
+function renderCartRow(item) {
+  const discountPercent = item.originalPrice
+    ? Math.round((1 - item.price / item.originalPrice) * 100)
     : null;
-  const checked = selectedIds.has(productId);
+  const checked = selectedIds.has(item.productId);
 
   return `
     <li class="cart-item">
       <label class="cart-item-check">
-        <input type="checkbox" class="item-checkbox" data-id="${productId}" ${checked ? "checked" : ""} />
+        <input type="checkbox" class="item-checkbox" data-id="${item.productId}" ${checked ? "checked" : ""} />
       </label>
-      <a href="product.html?id=${productId}" class="cart-item-thumb">
-        <img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(product.name)}" onerror="this.style.visibility='hidden'" />
+      <a href="product.html?id=${item.productId}" class="cart-item-thumb">
+        <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" onerror="this.style.visibility='hidden'" />
       </a>
       <div class="cart-item-info">
         <div class="cart-item-top">
-          <a href="product.html?id=${productId}" class="cart-item-name">${escapeHtml(product.name)}</a>
-          <button type="button" class="cart-item-delete" data-id="${productId}">삭제</button>
+          <a href="product.html?id=${item.productId}" class="cart-item-name">${escapeHtml(item.name)}</a>
+          <button type="button" class="cart-item-delete" data-id="${item.productId}">삭제</button>
         </div>
         <div class="rating-row">
-          <span class="stars">★ ${product.rating.toFixed(1)}</span>
-          <span>후기 ${product.reviewCount.toLocaleString("ko-KR")}개</span>
+          <span class="stars">★ ${item.rating.toFixed(1)}</span>
+          <span>후기 ${item.reviewCount.toLocaleString("ko-KR")}개</span>
         </div>
         <div class="cart-item-delivery">
-          <span class="badge delivery">${escapeHtml(product.deliveryBadge)}</span>
-          <span class="delivery-text">${escapeHtml(product.deliveryText)}</span>
+          <span class="badge delivery">${escapeHtml(item.deliveryBadge)}</span>
+          <span class="delivery-text">${escapeHtml(item.deliveryText)}</span>
         </div>
         ${
           discountPercent
-            ? `<div class="discount-line">${discountPercent}%<span class="original-price">${formatKRW(product.originalPrice)}</span></div>`
+            ? `<div class="discount-line">${discountPercent}%<span class="original-price">${formatKRW(item.originalPrice)}</span></div>`
             : ""
         }
-        <div class="cart-item-price">${formatKRW(product.price)}</div>
-        <div class="qty-selector cart-qty" data-id="${productId}">
+        <div class="cart-item-price">${formatKRW(item.price)}</div>
+        <div class="qty-selector cart-qty" data-id="${item.productId}">
           <button type="button" class="qty-decrease" aria-label="수량 감소">-</button>
-          <span class="qty-value">${quantity}</span>
+          <span class="qty-value">${item.quantity}</span>
           <button type="button" class="qty-increase" aria-label="수량 증가">+</button>
         </div>
       </div>
@@ -68,11 +58,11 @@ function renderCartRow(entry) {
   `;
 }
 
-function renderSummary(selectedEntries) {
-  const totalPrice = selectedEntries.reduce((sum, e) => sum + e.product.price * e.quantity, 0);
-  const totalDiscount = selectedEntries.reduce((sum, e) => {
-    if (!e.product.originalPrice) return sum;
-    return sum + (e.product.originalPrice - e.product.price) * e.quantity;
+function renderSummary(selectedItems) {
+  const totalPrice = selectedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  const totalDiscount = selectedItems.reduce((sum, item) => {
+    if (!item.originalPrice) return sum;
+    return sum + (item.originalPrice - item.price) * item.quantity;
   }, 0);
 
   return `
@@ -82,69 +72,90 @@ function renderSummary(selectedEntries) {
       <div class="summary-row"><span>총 즉시할인</span><span class="summary-discount">-${formatKRW(totalDiscount)}</span></div>
       <div class="summary-row"><span>총 배송비</span><span>+0원</span></div>
       <div class="summary-total"><span>${formatKRW(totalPrice)}</span></div>
-      <button type="button" class="btn-submit" id="checkout-btn" ${selectedEntries.length === 0 ? "disabled" : ""}>총 ${selectedEntries.length}개 상품 구매하기</button>
+      <button type="button" class="btn-submit" id="checkout-btn" ${selectedItems.length === 0 ? "disabled" : ""}>총 ${selectedItems.length}개 상품 구매하기</button>
     </aside>
   `;
 }
 
 function render() {
-  const entries = getCartWithProducts();
-  titleEl.textContent = `장바구니(${entries.length})`;
+  titleEl.textContent = `장바구니(${items.length})`;
+  setCartCountBadge(items.length);
 
-  if (entries.length === 0) {
+  if (items.length === 0) {
     layout.innerHTML = `
       <div class="cart-empty">
         <p>장바구니가 비어있습니다.</p>
         <a href="index.html" class="btn-outline">쇼핑 계속하기</a>
       </div>
     `;
-    renderCartCountBadge();
     return;
   }
 
   if (!initialized) {
-    entries.forEach((e) => selectedIds.add(e.productId));
+    items.forEach((item) => selectedIds.add(item.productId));
     initialized = true;
   } else {
-    selectedIds = new Set([...selectedIds].filter((id) => entries.some((e) => e.productId === id)));
+    selectedIds = new Set(
+      [...selectedIds].filter((id) => items.some((item) => item.productId === id))
+    );
   }
 
-  const allSelected = entries.every((e) => selectedIds.has(e.productId));
-  const selectedEntries = entries.filter((e) => selectedIds.has(e.productId));
+  const allSelected = items.every((item) => selectedIds.has(item.productId));
+  const selectedItems = items.filter((item) => selectedIds.has(item.productId));
 
   layout.innerHTML = `
     <div class="cart-items-col">
       <ul class="cart-item-list">
-        ${entries.map(renderCartRow).join("")}
+        ${items.map(renderCartRow).join("")}
       </ul>
       <div class="cart-select-row">
         <label class="cart-select-all">
           <input type="checkbox" id="select-all" ${allSelected ? "checked" : ""} />
-          <span>전체 선택(${selectedIds.size}/${entries.length})</span>
+          <span>전체 선택(${selectedIds.size}/${items.length})</span>
         </label>
         <button type="button" id="delete-selected-btn">선택삭제</button>
       </div>
     </div>
-    ${renderSummary(selectedEntries)}
+    ${renderSummary(selectedItems)}
   `;
+}
 
-  renderCartCountBadge();
+function showError(message) {
+  layout.innerHTML = `<div class="cart-empty"><p>${escapeHtml(message)}</p>
+    <a href="index.html" class="btn-outline">쇼핑 계속하기</a></div>`;
+}
+
+/** Applies a cart mutation and redraws from whatever the server says the cart now is. */
+async function mutate(action) {
+  layout.setAttribute("aria-busy", "true");
+  try {
+    items = (await action()).items;
+    render();
+  } catch (error) {
+    if (error.status !== 401) window.alert(error.message);
+  } finally {
+    layout.removeAttribute("aria-busy");
+  }
 }
 
 layout.addEventListener("click", (e) => {
   const deleteBtn = e.target.closest(".cart-item-delete");
   if (deleteBtn) {
     const id = Number(deleteBtn.dataset.id);
-    removeFromCart(id);
     selectedIds.delete(id);
-    render();
+    mutate(() => api.cart.removeItem(id));
     return;
   }
 
   if (e.target.closest("#delete-selected-btn")) {
-    removeMany([...selectedIds]);
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
     selectedIds.clear();
-    render();
+    mutate(async () => {
+      let cart;
+      for (const id of ids) cart = await api.cart.removeItem(id);
+      return cart;
+    });
     return;
   }
 
@@ -153,10 +164,7 @@ layout.addEventListener("click", (e) => {
     const wrapper = decreaseBtn.closest(".cart-qty");
     const id = Number(wrapper.dataset.id);
     const currentQty = Number(wrapper.querySelector(".qty-value").textContent);
-    if (currentQty > 1) {
-      updateQuantity(id, currentQty - 1);
-      render();
-    }
+    if (currentQty > 1) mutate(() => api.cart.updateItem(id, currentQty - 1));
     return;
   }
 
@@ -165,10 +173,7 @@ layout.addEventListener("click", (e) => {
     const wrapper = increaseBtn.closest(".cart-qty");
     const id = Number(wrapper.dataset.id);
     const currentQty = Number(wrapper.querySelector(".qty-value").textContent);
-    if (currentQty < 99) {
-      updateQuantity(id, currentQty + 1);
-      render();
-    }
+    if (currentQty < 99) mutate(() => api.cart.updateItem(id, currentQty + 1));
     return;
   }
 
@@ -190,15 +195,24 @@ layout.addEventListener("change", (e) => {
 
   const selectAll = e.target.closest("#select-all");
   if (selectAll) {
-    const entries = getCartWithProducts();
-    if (selectAll.checked) {
-      entries.forEach((entry) => selectedIds.add(entry.productId));
-    } else {
-      selectedIds.clear();
-    }
+    if (selectAll.checked) items.forEach((item) => selectedIds.add(item.productId));
+    else selectedIds.clear();
     render();
   }
 });
 
-render();
+async function load() {
+  layout.innerHTML = `<div class="cart-empty"><p>불러오는 중...</p></div>`;
+  try {
+    items = (await api.cart.get()).items;
+    render();
+  } catch (error) {
+    if (error.status !== 401) showError(error.message);
+  }
+}
+
+renderHeaderAuth();
+if (requireLogin()) {
+  load();
+}
 initHeaderSearch();

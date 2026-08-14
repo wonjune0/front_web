@@ -1,3 +1,6 @@
+import { api } from "./api.js";
+import { setSession } from "./session.js";
+
 const form = document.getElementById("signup-form");
 const toast = document.getElementById("form-toast");
 
@@ -127,7 +130,18 @@ requiredAgreements.forEach((checkbox) => {
   });
 });
 
-form.addEventListener("submit", (e) => {
+const submitBtn = document.getElementById("submit-btn");
+
+/** Server-side field errors land under the same inputs as the client-side ones. */
+function applyFieldErrors(fieldErrors) {
+  const byName = { email: fields.email, password: fields.password, name: fields.name,
+    phone: fields.phone };
+  fieldErrors.forEach(({ field, message }) => {
+    if (byName[field]) setFieldError(byName[field], message);
+  });
+}
+
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   toast.hidden = true;
 
@@ -146,6 +160,31 @@ form.addEventListener("submit", (e) => {
     return;
   }
 
-  toast.textContent = "회원가입 기능은 back_web 연동 후 실제로 동작합니다";
-  toast.hidden = false;
+  const email = fields.email.input.value.trim();
+  const password = fields.password.input.value;
+  submitBtn.disabled = true;
+
+  try {
+    await api.auth.signup({
+      email,
+      password,
+      name: fields.name.input.value.trim(),
+      phone: fields.phone.input.value.trim(),
+      age14: document.getElementById("agree-age").checked,
+      termsOfService: document.getElementById("agree-terms").checked,
+      financialTerms: document.getElementById("agree-finance").checked,
+      thirdPartyConsent: document.getElementById("agree-thirdparty").checked,
+    });
+
+    // Signing up and then being told to log in is friction the user did not ask for;
+    // the credentials are still in hand, so exchange them for a session right away.
+    setSession(await api.auth.login({ email, password }));
+    window.location.href = "index.html";
+  } catch (error) {
+    applyFieldErrors(error.fieldErrors ?? []);
+    toast.textContent = error.message;
+    toast.hidden = false;
+  } finally {
+    submitBtn.disabled = false;
+  }
 });
