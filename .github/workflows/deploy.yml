@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,15 +27,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
+      - name: Resolve deploy targets
+        run: |
+          BUCKET=$(aws ssm get-parameter --name /seoul/frontend/bucket_name \
+            --query Parameter.Value --output text)
+          DIST_ID=$(aws ssm get-parameter --name /seoul/frontend/distribution_id \
+            --query Parameter.Value --output text)
+          echo "BUCKET=$BUCKET" >> "$GITHUB_ENV"
+          echo "DIST_ID=$DIST_ID" >> "$GITHUB_ENV"
+
       - name: Sync to S3
         run: |
-          aws s3 sync . s3://${{ secrets.FRONTEND_BUCKET_NAME }} \
-            --delete \
-            --exclude ".git/*" \
-            --exclude ".github/*"
+          aws s3 sync . "s3://$BUCKET" --delete \
+            --exclude ".git/*" --exclude ".github/*"
 
       - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
