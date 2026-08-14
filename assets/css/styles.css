@@ -133,6 +133,24 @@ header.site-header {
   color: var(--color-primary);
 }
 
+.account-user {
+  color: var(--color-primary);
+}
+
+/* Logout is an action, not navigation, so it is a button styled to sit with the links. */
+.account-link-btn {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.account-link-btn:hover {
+  color: var(--color-primary);
+}
+
 .cart-count {
   position: absolute;
   top: -4px;
@@ -316,6 +334,31 @@ header.site-header {
   text-align: center;
   color: var(--color-text-muted);
   padding: 80px 20px;
+}
+
+/* Only rendered when the result set spans more than one page. */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 28px 0 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.pagination button {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: #fff;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .product-card {

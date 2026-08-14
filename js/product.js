@@ -1,11 +1,15 @@
-import { mockProducts } from "../data/products.mock.js";
+import { api, ApiError, loginUrl } from "./api.js";
 import { formatKRW, escapeHtml, getQueryParam, initHeaderSearch } from "./util.js";
-import { addToCart, renderCartCountBadge } from "./cart-store.js";
+import { refreshCartCountBadge, setCartCountBadge } from "./cart-store.js";
+import { isLoggedIn, renderHeaderAuth } from "./session.js";
 
 const breadcrumb = document.getElementById("breadcrumb");
 const layout = document.getElementById("detail-layout");
 const tabsSection = document.getElementById("detail-tabs-section");
 
+// Reviews and Q&A are still generated client-side -- the backend exposes no endpoint
+// for either, so the product's own rating/reviewCount are used to fabricate a plausible
+// tab rather than leaving the section empty.
 const REVIEW_NICKNAMES = ["김**", "이**", "박**", "최**", "정**", "우**"];
 const REVIEW_TEMPLATES = [
   (name) => `${name} 가격 대비 만족스럽게 잘 쓰고 있어요. 재구매 의사 있습니다.`,
@@ -263,27 +267,59 @@ function render(product) {
       .forEach((b) => b.classList.toggle("active", b === btn));
   });
 
-  document.getElementById("add-cart-btn").addEventListener("click", () => {
-    addToCart(product.id, quantity);
-    renderCartCountBadge();
-    showToast("장바구니에 담았습니다");
+  // The cart lives on the server, so both buttons need a session. Sending the user to
+  // log in with a redirect back here keeps the product they were looking at.
+  async function addCurrentSelectionToCart(button) {
+    if (!isLoggedIn()) {
+      window.location.href = loginUrl(`product.html?id=${product.id}`);
+      return false;
+    }
+    button.disabled = true;
+    try {
+      const cart = await api.cart.addItem(product.id, quantity);
+      setCartCountBadge(cart.items.length);
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) return false;
+      showToast(error.message);
+      return false;
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  document.getElementById("add-cart-btn").addEventListener("click", async (e) => {
+    if (await addCurrentSelectionToCart(e.currentTarget)) {
+      showToast("장바구니에 담았습니다");
+    }
   });
 
-  document.getElementById("buy-now-btn").addEventListener("click", () => {
-    showToast("결제 기능은 다음 단계에서 연결될 예정입니다");
+  document.getElementById("buy-now-btn").addEventListener("click", async (e) => {
+    if (await addCurrentSelectionToCart(e.currentTarget)) {
+      window.location.href = "cart.html";
+    }
   });
 
   renderTabsSection(product);
 }
 
-const id = Number(getQueryParam("id"));
-const product = mockProducts.find((p) => p.id === id);
+async function load() {
+  const id = Number(getQueryParam("id"));
+  if (!Number.isInteger(id) || id <= 0) {
+    layout.innerHTML = `<p style="padding: 40px 20px;">상품을 찾을 수 없습니다.</p>`;
+    return;
+  }
 
-if (!product) {
-  layout.innerHTML = `<p style="padding: 40px 20px;">상품을 찾을 수 없습니다.</p>`;
-} else {
-  render(product);
+  layout.innerHTML = `<p style="padding: 40px 20px;">불러오는 중...</p>`;
+  try {
+    render(await api.products.detail(id));
+  } catch (error) {
+    const message = error.status === 404 ? "상품을 찾을 수 없습니다." : error.message;
+    layout.innerHTML = `<p style="padding: 40px 20px;">${escapeHtml(message)}</p>`;
+  }
 }
 
-renderCartCountBadge();
+load();
+renderHeaderAuth();
+refreshCartCountBadge();
 initHeaderSearch();
