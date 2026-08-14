@@ -1,67 +1,14 @@
-const CART_KEY = "shopdemo_cart";
+import { api } from "./api.js";
+import { isLoggedIn } from "./session.js";
 
-function readCart() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(CART_KEY));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCart(cart) {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-}
-
-export function getCart() {
-  return readCart();
-}
-
-export function addToCart(productId, quantity = 1) {
-  const cart = readCart();
-  const existing = cart.find((item) => item.productId === productId);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    cart.push({ productId, quantity });
-  }
-  writeCart(cart);
-  return cart;
-}
-
-export function updateQuantity(productId, quantity) {
-  const cart = readCart();
-  const item = cart.find((i) => i.productId === productId);
-  if (item) {
-    item.quantity = Math.max(1, quantity);
-    writeCart(cart);
-  }
-  return cart;
-}
-
-export function removeFromCart(productId) {
-  const cart = readCart().filter((item) => item.productId !== productId);
-  writeCart(cart);
-  return cart;
-}
-
-export function removeMany(productIds) {
-  const idSet = new Set(productIds);
-  const cart = readCart().filter((item) => !idSet.has(item.productId));
-  writeCart(cart);
-  return cart;
-}
-
-export function getCartCount() {
-  return readCart().length;
-}
-
-export function renderCartCountBadge() {
-  const el = document.getElementById("cart-count");
-  if (el) el.textContent = String(getCartCount());
-}
+/**
+ * The cart itself lives on the server (/api/cart) and is not mirrored here -- this module
+ * only holds the two pieces of throwaway UI state that never needed to be persisted
+ * server-side, plus the header badge.
+ */
 
 const CHECKOUT_SELECTION_KEY = "shopdemo_checkout_selection";
+const LAST_ORDER_KEY = "shopdemo_last_order_number";
 
 export function setCheckoutSelection(productIds) {
   sessionStorage.setItem(CHECKOUT_SELECTION_KEY, JSON.stringify(productIds));
@@ -76,16 +23,37 @@ export function getCheckoutSelection() {
   }
 }
 
-const LAST_ORDER_KEY = "shopdemo_last_order";
-
-export function setLastOrder(order) {
-  sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
+export function clearCheckoutSelection() {
+  sessionStorage.removeItem(CHECKOUT_SELECTION_KEY);
 }
 
-export function getLastOrder() {
+/**
+ * Only the order number is kept; the completion page re-fetches the order so a refresh
+ * still shows it and every number on screen comes from the server.
+ */
+export function setLastOrderNumber(orderNumber) {
+  sessionStorage.setItem(LAST_ORDER_KEY, orderNumber);
+}
+
+export function getLastOrderNumber() {
+  return sessionStorage.getItem(LAST_ORDER_KEY);
+}
+
+export function setCartCountBadge(count) {
+  const el = document.getElementById("cart-count");
+  if (el) el.textContent = String(count);
+}
+
+export async function refreshCartCountBadge() {
+  if (!isLoggedIn()) {
+    setCartCountBadge(0);
+    return;
+  }
   try {
-    return JSON.parse(sessionStorage.getItem(LAST_ORDER_KEY));
+    const cart = await api.cart.get();
+    setCartCountBadge(cart.items.length);
   } catch {
-    return null;
+    // The badge is decoration; a failure here must not break the page it sits on.
+    setCartCountBadge(0);
   }
 }
