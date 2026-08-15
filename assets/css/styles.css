@@ -1635,3 +1635,166 @@ header.site-header {
     grid-template-columns: 1fr;
   }
 }
+
+/* Stock and payment state */
+.product-card .thumb {
+  position: relative;
+}
+
+.sold-out-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(33, 33, 36, 0.55);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.product-card.sold-out .name,
+.product-card.sold-out .price {
+  color: var(--color-text-muted);
+}
+
+.stock-line.low {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-discount);
+}
+
+.detail-stock {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.detail-stock.low {
+  color: var(--color-discount);
+  font-weight: 700;
+}
+
+.detail-stock.sold-out {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.btn-cart:disabled,
+.btn-buy:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cart-item-warning,
+.checkout-item-warning {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-discount);
+}
+
+.checkout-item-warning {
+  grid-column: 1 / -1;
+}
+
+.cart-item-lowstock {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--color-discount);
+}
+
+.cart-summary-error {
+  margin: 8px 0 0;
+}
+
+.qty-selector button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Payment progress */
+.pay-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(33, 33, 36, 0.45);
+}
+
+.pay-overlay[hidden] {
+  display: none;
+}
+
+.pay-overlay-card {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.pay-spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 16px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: pay-spin 0.8s linear infinite;
+}
+
+@keyframes pay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 시스템 설정에서 애니메이션을 줄이도록 했다면 회전 대신 정지된 표식만 남긴다. */
+@media (prefers-reduced-motion: reduce) {
+  .pay-spinner {
+    animation: none;
+  }
+}
+
+.pay-overlay-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.pay-overlay-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.demo-toggle {
+  color: var(--color-text-muted);
+}
+
+/* Order status */
+.order-status.paid {
+  color: var(--color-primary);
+}
+
+.order-status.pending {
+  color: var(--color-delivery);
+}
+
+.order-status.failed {
+  color: var(--color-discount);
+}
+
+.order-status.cancelled {
+  color: var(--color-text-muted);
+}
+
+.order-card-actions {
+  display: flex;
+  gap: 8px;
+}

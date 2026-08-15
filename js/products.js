@@ -82,11 +82,14 @@ function renderProductCard(p) {
   const discountPercent = p.originalPrice
     ? Math.round((1 - p.price / p.originalPrice) * 100)
     : null;
+  const soldOut = p.stockQuantity === 0;
+  const lowStock = typeof p.stockQuantity === "number" && p.stockQuantity > 0 && p.stockQuantity <= 5;
 
   return `
-    <a class="product-card" href="product.html?id=${p.id}">
+    <a class="product-card ${soldOut ? "sold-out" : ""}" href="product.html?id=${p.id}">
       <div class="thumb">
         <img src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name)}" onerror="this.style.visibility='hidden'" />
+        ${soldOut ? `<span class="sold-out-overlay">품절</span>` : ""}
       </div>
       <div class="name">${escapeHtml(p.name)}</div>
       ${
@@ -103,6 +106,7 @@ function renderProductCard(p) {
         <span class="stars">★ ${p.rating.toFixed(1)}</span>
         <span>(${p.reviewCount.toLocaleString("ko-KR")})</span>
       </div>
+      ${lowStock ? `<div class="stock-line low">품절임박 ${p.stockQuantity}개 남음</div>` : ""}
       ${p.rewardAmount ? `<span class="reward-badge">최대 ${formatKRW(p.rewardAmount)} 적립</span>` : ""}
     </a>
   `;

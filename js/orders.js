@@ -8,8 +8,24 @@ const titleEl = document.getElementById("orders-title");
 
 const PAGE_SIZE = 10;
 
-const STATUS_LABELS = { PLACED: "결제 완료" };
+const STATUS_LABELS = {
+  PENDING: "결제 진행중",
+  PAID: "결제 완료",
+  FAILED: "결제 실패",
+  CANCELLED: "주문 취소",
+};
+const STATUS_CLASSES = {
+  PENDING: "pending",
+  PAID: "paid",
+  FAILED: "failed",
+  CANCELLED: "cancelled",
+};
 const PAYMENT_LABELS = { card: "신용/체크카드", transfer: "무통장입금" };
+const PAYMENT_STATUS_LABELS = {
+  PENDING: "승인 대기",
+  APPROVED: "승인 완료",
+  FAILED: "승인 거절",
+};
 
 let currentPage = 0;
 /** 펼쳐 둔 주문번호. 상세는 열 때 한 번만 받아 여기에 담아 둔다. */
@@ -55,6 +71,16 @@ function renderDetail(detail) {
       <div class="summary-row"><span>배송지</span><span>${escapeHtml(`(${detail.zipcode}) ${detail.address1} ${detail.address2}`)}</span></div>
       <div class="summary-row"><span>배송 요청</span><span>${escapeHtml(detail.deliveryRequest)}</span></div>
       <div class="summary-row"><span>결제 수단</span><span>${escapeHtml(PAYMENT_LABELS[detail.paymentMethod] ?? detail.paymentMethod)}</span></div>
+      ${
+        detail.paymentStatus
+          ? `<div class="summary-row"><span>결제 상태</span><span>${escapeHtml(PAYMENT_STATUS_LABELS[detail.paymentStatus] ?? detail.paymentStatus)}</span></div>`
+          : ""
+      }
+      ${
+        detail.pgTransactionId
+          ? `<div class="summary-row"><span>승인 번호</span><span>${escapeHtml(detail.pgTransactionId)}</span></div>`
+          : ""
+      }
     </div>
   `;
 }
@@ -68,16 +94,23 @@ function renderOrderCard(order) {
       <div class="order-card-head">
         <div class="order-card-meta">
           <span class="order-date">${formatDate(order.placedAt)}</span>
-          <span class="order-status">${escapeHtml(STATUS_LABELS[order.status] ?? order.status)}</span>
+          <span class="order-status ${STATUS_CLASSES[order.status] ?? ""}">${escapeHtml(STATUS_LABELS[order.status] ?? order.status)}</span>
         </div>
         <span class="order-number">주문번호 ${escapeHtml(order.orderNumber)}</span>
       </div>
       <div class="order-card-body">
         <div class="order-card-title">${escapeHtml(summaryTitle(order))}</div>
         <div class="order-card-price">${formatKRW(order.totalPrice)}</div>
-        <button type="button" class="btn-outline-sm order-toggle" data-order="${escapeHtml(order.orderNumber)}">
-          ${open ? "접기" : "상세 보기"}
-        </button>
+        <div class="order-card-actions">
+          <button type="button" class="btn-outline-sm order-toggle" data-order="${escapeHtml(order.orderNumber)}">
+            ${open ? "접기" : "상세 보기"}
+          </button>
+          ${
+            order.status === "PAID"
+              ? `<button type="button" class="btn-outline-sm order-cancel" data-order="${escapeHtml(order.orderNumber)}">주문 취소</button>`
+              : ""
+          }
+        </div>
       </div>
       ${open ? `<div class="order-card-detail">${detail ? renderDetail(detail) : "<p class=\"empty-results\">불러오는 중...</p>"}</div>` : ""}
     </li>
@@ -136,6 +169,23 @@ layout.addEventListener("click", async (e) => {
     currentPage = Number(pageBtn.dataset.page);
     expanded.clear();
     load();
+    return;
+  }
+
+  const cancelBtn = e.target.closest(".order-cancel");
+  if (cancelBtn) {
+    const orderNumber = cancelBtn.dataset.order;
+    if (!window.confirm("주문을 취소하시겠습니까? 재고는 즉시 복구됩니다.")) return;
+    cancelBtn.disabled = true;
+    try {
+      await api.orders.cancel(orderNumber);
+      // 취소하면 상태와 재고가 모두 바뀌므로 캐시해 둔 상세는 버리고 다시 읽는다.
+      expanded.delete(orderNumber);
+      await load();
+    } catch (error) {
+      cancelBtn.disabled = false;
+      if (error.status !== 401) window.alert(error.message);
+    }
     return;
   }
 

@@ -132,6 +132,13 @@ function renderQnaPanel(product) {
   `;
 }
 
+function stockLine(stock) {
+  if (stock === null) return "";
+  if (stock === 0) return `<div class="detail-stock sold-out">품절</div>`;
+  if (stock <= 5) return `<div class="detail-stock low">품절임박 · ${stock}개 남음</div>`;
+  return `<div class="detail-stock">재고 ${stock}개</div>`;
+}
+
 function renderTabsSection(product) {
   const tabs = [
     { key: "detail", label: "상품상세" },
@@ -186,6 +193,8 @@ function render(product) {
   const discountPercent = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
+  const stock = typeof product.stockQuantity === "number" ? product.stockQuantity : null;
+  const soldOut = stock === 0;
 
   layout.innerHTML = `
     <div class="gallery-thumbs" id="gallery-thumbs">
@@ -207,6 +216,7 @@ function render(product) {
         <span class="stars">★ ${product.rating.toFixed(1)}</span>
         <span>후기 ${product.reviewCount.toLocaleString("ko-KR")}개</span>
       </div>
+      ${stockLine(stock)}
       <div class="detail-price-block">
         ${
           discountPercent
@@ -227,15 +237,18 @@ function render(product) {
         총 상품금액 <strong id="total-price">${formatKRW(product.price)}</strong>
       </div>
       <div class="detail-actions">
-        <button type="button" class="btn-cart" id="add-cart-btn">장바구니 담기</button>
-        <button type="button" class="btn-buy" id="buy-now-btn">바로구매</button>
+        <button type="button" class="btn-cart" id="add-cart-btn" ${soldOut ? "disabled" : ""}>
+          ${soldOut ? "품절" : "장바구니 담기"}
+        </button>
+        <button type="button" class="btn-buy" id="buy-now-btn" ${soldOut ? "disabled" : ""}>바로구매</button>
       </div>
       <div id="cart-toast" class="cart-toast" hidden></div>
     </div>
   `;
 
   let quantity = 1;
-  const maxQty = 99;
+  // 재고를 넘겨 담아 봐야 서버가 409로 막는다. 고를 수 있는 상한 자체를 재고에 맞춘다.
+  const maxQty = stock === null ? 99 : Math.min(99, stock);
   const qtyValue = document.getElementById("qty-value");
   const totalPrice = document.getElementById("total-price");
 
