@@ -52,7 +52,10 @@ function render(order) {
         ${order.items.map(renderOrderItem).join("")}
       </ul>
 
-      <a href="index.html" class="btn-submit order-complete-action">쇼핑 계속하기</a>
+      <div class="order-complete-actions">
+        <a href="orders.html" class="btn-submit order-complete-action">주문 내역 보기</a>
+        <a href="index.html" class="btn-outline order-complete-action">쇼핑 계속하기</a>
+      </div>
 
       <p class="order-complete-note">이 화면은 데모용으로, 실제 결제 및 주문 처리는 이루어지지 않았습니다.</p>
     </div>

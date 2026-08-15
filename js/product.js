@@ -1,6 +1,6 @@
 import { api, ApiError, loginUrl } from "./api.js";
 import { formatKRW, escapeHtml, getQueryParam, initHeaderSearch } from "./util.js";
-import { refreshCartCountBadge, setCartCountBadge } from "./cart-store.js";
+import { refreshCartCountBadge, setCartCountBadge, setCheckoutSelection } from "./cart-store.js";
 import { isLoggedIn, renderHeaderAuth } from "./session.js";
 
 const breadcrumb = document.getElementById("breadcrumb");
@@ -294,9 +294,12 @@ function render(product) {
     }
   });
 
+  // 바로구매는 장바구니에 담되 결제 화면에서 이 상품만 선택된 상태로 넘어간다.
+  // 카트에 다른 상품이 있어도 함께 결제되지 않는다.
   document.getElementById("buy-now-btn").addEventListener("click", async (e) => {
     if (await addCurrentSelectionToCart(e.currentTarget)) {
-      window.location.href = "cart.html";
+      setCheckoutSelection([product.id]);
+      window.location.href = "checkout.html";
     }
   });
 
