@@ -66,6 +66,7 @@ export function renderHeaderAuth() {
   const user = getUser();
   el.innerHTML = user
     ? `<span class="account-user">${escapeHtml(user.name)}님</span>
+       <a href="orders.html">주문내역</a>
        <button type="button" class="account-link-btn" id="logout-btn">로그아웃</button>`
     : `<a href="login.html">로그인</a>
        <a href="signup.html">회원가입</a>`;

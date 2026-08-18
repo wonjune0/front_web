@@ -40,8 +40,8 @@ async function toApiError(response) {
   return new ApiError(response.status, message, fieldErrors);
 }
 
-async function request(path, { method = "GET", body, auth = false } = {}) {
-  const headers = {};
+async function request(path, { method = "GET", body, auth = false, headers: extraHeaders } = {}) {
+  const headers = { ...extraHeaders };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (auth) {
     const token = getToken();
@@ -109,8 +109,25 @@ export const api = {
     clear: () => request("/api/cart", { method: "DELETE", auth: true }),
   },
   orders: {
-    create: (body) => request("/api/orders", { method: "POST", body, auth: true }),
+    /**
+     * The idempotency key is what makes a retry safe: if the first attempt reached the
+     * server but the answer never came back, resending the same key returns that attempt's
+     * outcome instead of charging again. forceFailure is a demo switch and is ignored by
+     * the server unless the environment explicitly enables it.
+     */
+    create: (body, { idempotencyKey, forceFailure = false } = {}) =>
+      request("/api/orders", {
+        method: "POST",
+        body,
+        auth: true,
+        headers: {
+          ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+          ...(forceFailure ? { "X-Force-Payment-Failure": "true" } : {}),
+        },
+      }),
     list: (params = {}) => request(`/api/orders${query(params)}`, { auth: true }),
     detail: (orderNumber) => request(`/api/orders/${orderNumber}`, { auth: true }),
+    cancel: (orderNumber) =>
+      request(`/api/orders/${orderNumber}/cancel`, { method: "POST", auth: true }),
   },
 };

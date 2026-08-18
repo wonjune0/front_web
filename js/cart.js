@@ -48,17 +48,45 @@ function renderCartRow(item) {
             : ""
         }
         <div class="cart-item-price">${formatKRW(item.price)}</div>
-        <div class="qty-selector cart-qty" data-id="${item.productId}">
+        <div class="qty-selector cart-qty" data-id="${item.productId}" data-stock="${item.stockQuantity ?? ""}">
           <button type="button" class="qty-decrease" aria-label="수량 감소">-</button>
           <span class="qty-value">${item.quantity}</span>
-          <button type="button" class="qty-increase" aria-label="수량 증가">+</button>
+          <button type="button" class="qty-increase" aria-label="수량 증가" ${atStockLimit(item) ? "disabled" : ""}>+</button>
         </div>
+        ${stockNotice(item)}
       </div>
     </li>
   `;
 }
 
+function atStockLimit(item) {
+  return typeof item.stockQuantity === "number" && item.quantity >= item.stockQuantity;
+}
+
+/**
+ * Stock can move while a cart sits, so the row says what is left the moment it is drawn.
+ * Nothing here reserves anything -- the reservation happens when the order is placed.
+ */
+function stockNotice(item) {
+  if (typeof item.stockQuantity !== "number") return "";
+  if (item.stockQuantity === 0) {
+    return `<p class="cart-item-warning">품절된 상품입니다</p>`;
+  }
+  if (item.stockQuantity < item.quantity) {
+    return `<p class="cart-item-warning">재고 ${item.stockQuantity}개 남음 - 수량을 줄여주세요</p>`;
+  }
+  if (item.stockQuantity <= 5) {
+    return `<p class="cart-item-lowstock">품절임박 (${item.stockQuantity}개 남음)</p>`;
+  }
+  return "";
+}
+
 function renderSummary(selectedItems) {
+  // 재고보다 많이 담긴 상품이 선택돼 있으면 결제로 넘어가도 서버가 409로 막는다.
+  // 한 화면 앞에서 잡아 주는 편이 낫다.
+  const blocked = selectedItems.some(
+    (item) => typeof item.stockQuantity === "number" && item.stockQuantity < item.quantity
+  );
   const totalPrice = selectedItems.reduce((sum, item) => sum + item.lineTotal, 0);
   const totalDiscount = selectedItems.reduce((sum, item) => {
     if (!item.originalPrice) return sum;
@@ -72,7 +100,12 @@ function renderSummary(selectedItems) {
       <div class="summary-row"><span>총 즉시할인</span><span class="summary-discount">-${formatKRW(totalDiscount)}</span></div>
       <div class="summary-row"><span>총 배송비</span><span>+0원</span></div>
       <div class="summary-total"><span>${formatKRW(totalPrice)}</span></div>
-      <button type="button" class="btn-submit" id="checkout-btn" ${selectedItems.length === 0 ? "disabled" : ""}>총 ${selectedItems.length}개 상품 구매하기</button>
+      ${
+        blocked
+          ? `<p class="field-error cart-summary-error">재고가 부족한 상품이 선택되어 있습니다.</p>`
+          : ""
+      }
+      <button type="button" class="btn-submit" id="checkout-btn" ${selectedItems.length === 0 || blocked ? "disabled" : ""}>총 ${selectedItems.length}개 상품 구매하기</button>
     </aside>
   `;
 }
@@ -173,7 +206,8 @@ layout.addEventListener("click", (e) => {
     const wrapper = increaseBtn.closest(".cart-qty");
     const id = Number(wrapper.dataset.id);
     const currentQty = Number(wrapper.querySelector(".qty-value").textContent);
-    if (currentQty < 99) mutate(() => api.cart.updateItem(id, currentQty + 1));
+    const stock = wrapper.dataset.stock === "" ? Infinity : Number(wrapper.dataset.stock);
+    if (currentQty < Math.min(99, stock)) mutate(() => api.cart.updateItem(id, currentQty + 1));
     return;
   }
 
